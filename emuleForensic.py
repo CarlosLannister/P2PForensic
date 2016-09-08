@@ -76,6 +76,7 @@ from org.sleuthkit.autopsy.ingest import ModuleDataEvent
 from org.sleuthkit.autopsy.casemodule.services import FileManager
 from org.sleuthkit.autopsy.datamodel import ContentUtils
 
+
 # This will work in 4.0.1 and beyond
 # from org.sleuthkit.autopsy.casemodule.services import Blackboard
 
@@ -142,9 +143,34 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
 
         emuleConfigFiles = fileManager.findFiles(dataSource, "%", "/AppData/Local/eMule/config")
 
+        skCase = Case.getCurrentCase().getSleuthkitCase();
+        try:
+             self.log(Level.INFO, "Begin Create New Artifacts")
+             artID_pf = skCase.addArtifactType( "TSK_EMULE", "Emule Forensic")
+        except:     
+             self.log(Level.INFO, "Artifacts Creation Error, some artifacts may not exist now. ==> ")
+             artID_pf = skCase.getArtifactTypeID("TSK_EMULE")
+
+                # Create the attribute type, if it exists then catch the error
+        try:
+            attID_pf_fn = skCase.addArtifactAttributeType("TSK_EMULE_ED2K", BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "ED2K Link")
+        except:     
+             self.log(Level.INFO, "Attributes Creation Error, Prefetch File Name. ==> ")
+
+        try:
+            attID_pf_an = skCase.addArtifactAttributeType("TSK_PREFETCH_ACTUAL_FILE_NAME", BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "Actual File Name")           
+        except:     
+             self.log(Level.INFO, "Attributes Creation Error, Actual File Name. ==> ")
+
+
         #sharedFiles sharedDir
         #AC_SearchStrings.dat StoredSearches.dat 
         #emfriends.met
+
+        artID_pf = skCase.getArtifactTypeID("TSK_EMULE")
+        artID_pf_evt = skCase.getArtifactType("TSK_EMULE")
+        attID_pf_fn = skCase.getAttributeType("TSK_EMULE_ED2K")
+        attID_pf_an = skCase.getAttributeType("TSK_PREFETCH_ACTUAL_FILE_NAME")
 
         emuleTorrentConfigFiles = fileManager.findFiles(dataSource, "%", "Local/eMuleTorrent")
 
@@ -163,10 +189,12 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
                 configFilesPath = os.path.join(Case.getCurrentCase().getTempDirectory(), str(file.getName()))
                 ContentUtils.writeToFile(file, File(configFilesPath))
 
-                art = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT)
+                #art = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT)
 
 
-                art.addAttribute(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, EmuleIngestModuleFactory.moduleName, "Emule4 Info"))
+                #art.addAttribute(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(), EmuleIngestModuleFactory.moduleName, "Emule5 Info"))
+                #IngestServices.getInstance().fireModuleDataEvent(ModuleDataEvent(EmuleIngestModuleFactory.moduleName, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, None))
+
                 #att = BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, EmuleIngestModuleFactory.moduleName, str(file.getName()))
                 #art.addAttribute(att)
 
@@ -178,16 +206,23 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
                 reportPath = os.path.join(Case.getCurrentCase().getTempDirectory(), "report")
                 report = open(reportPath, 'w')
 
+                art = file.newArtifact(artID_pf)
+                name = str(file.getName())
+
+
 
                 for i, line in enumerate(f):
                     if i > 4:
                         self.log(Level.INFO, "Linea3 ")
                         line = line.strip()
-
                         report.write(line + "\n")
-                    
+                        art.addAttributes(((BlackboardAttribute(attID_pf_fn, EmuleIngestModuleFactory.moduleName, line)), \
+                        (BlackboardAttribute(attID_pf_an, EmuleIngestModuleFactory.moduleName, name))))
 
-                
+
+                IngestServices.getInstance().fireModuleDataEvent(ModuleDataEvent(EmuleIngestModuleFactory.moduleName, artID_pf_evt, None))
+           
+
                 f.close()
                 report.close()
 
