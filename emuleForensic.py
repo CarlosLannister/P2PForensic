@@ -141,43 +141,71 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
    
         fileManager = Case.getCurrentCase().getServices().getFileManager()
 
-        emuleConfigFiles = fileManager.findFiles(dataSource, "%", "/AppData/Local/eMule/config")
 
         skCase = Case.getCurrentCase().getSleuthkitCase();
         try:
              self.log(Level.INFO, "Begin Create New Artifacts")
-             artID_pf = skCase.addArtifactType( "TSK_EMULE", "Emule Forensic")
+             artID_ef = skCase.addArtifactType( "TSK_EMULE", "Emule Forensic")
         except:     
              self.log(Level.INFO, "Artifacts Creation Error, some artifacts may not exist now. ==> ")
              artID_pf = skCase.getArtifactTypeID("TSK_EMULE")
 
                 # Create the attribute type, if it exists then catch the error
         try:
-            attID_pf_fn = skCase.addArtifactAttributeType("TSK_EMULE_ED2K", BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "ED2K Link")
+            attID_ef_username = skCase.addArtifactAttributeType("TSK_EMULE_USERNAME", BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "Nickname")
         except:     
              self.log(Level.INFO, "Attributes Creation Error, Prefetch File Name. ==> ")
 
         try:
-            attID_pf_an = skCase.addArtifactAttributeType("TSK_PREFETCH_ACTUAL_FILE_NAME", BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "Actual File Name")           
+            attID_ef_version = skCase.addArtifactAttributeType("TSK_EMULE_VERSION", BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "Emule Version")           
         except:     
              self.log(Level.INFO, "Attributes Creation Error, Actual File Name. ==> ")
 
+        try:
+            attID_ef_language = skCase.addArtifactAttributeType("TSK_EMULE_LANGUAGE", BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "Emule Language")           
+        except:     
+             self.log(Level.INFO, "Attributes Creation Error, Actual File Name. ==> ")
+
+        try:
+            attID_ef_incoming_dir = skCase.addArtifactAttributeType("TSK_EMULE_INCOMING", BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "Incoming Dir")           
+        except:     
+             self.log(Level.INFO, "Attributes Creation Error, Actual File Name. ==> ")
+
+        try:
+            attID_ef_completed_files = skCase.addArtifactAttributeType("TSK_EMULE_COMPLETED_FILES", BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "Completed Files")           
+        except:     
+             self.log(Level.INFO, "Attributes Creation Error, Actual File Name. ==> ")
+
+        try:
+            attID_ef_downloaded_bytes = skCase.addArtifactAttributeType("TSK_EMULE_DONLOADED_BYTES", BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "Downloaded Bytes")           
+        except:     
+             self.log(Level.INFO, "Attributes Creation Error, Actual File Name. ==> ")
 
         #sharedFiles sharedDir
         #AC_SearchStrings.dat StoredSearches.dat 
         #emfriends.met
 
-        artID_pf = skCase.getArtifactTypeID("TSK_EMULE")
-        artID_pf_evt = skCase.getArtifactType("TSK_EMULE")
-        attID_pf_fn = skCase.getAttributeType("TSK_EMULE_ED2K")
-        attID_pf_an = skCase.getAttributeType("TSK_PREFETCH_ACTUAL_FILE_NAME")
+        artID_ef = skCase.getArtifactTypeID("TSK_EMULE")
+        artID_ef_evt = skCase.getArtifactType("TSK_EMULE")
+        attID_pf_fn = skCase.getAttributeType("TSK_EMULE_USERNAME")
+        attID_pf_an = skCase.getAttributeType("TSK_EMULE_VERSION")
+        attID_ef_ln = skCase.getAttributeType("TSK_EMULE_LANGUAGE")
+        attID_ef_id = skCase.getAttributeType("TSK_EMULE_INCOMING")
+        attID_ef_cf = skCase.getAttributeType("TSK_EMULE_COMPLETED_FILES")
+        attID_ef_db = skCase.getAttributeType("TSK_EMULE_DONLOADED_BYTES")
+        
 
         emuleTorrentConfigFiles = fileManager.findFiles(dataSource, "%", "Local/eMuleTorrent")
+        emuleConfigFiles = fileManager.findFiles(dataSource, "%", "/AppData/Local/eMule/config")
 
         self.log(Level.INFO, "P2P emule Starting")
-
+        reportPath = os.path.join(Case.getCurrentCase().getCaseDirectory() + "/Reports", "userInfo.csv")
+        report = open(reportPath, 'w')
 
         fileCount = 0;
+
+
+
         for file in emuleConfigFiles:
             
             # Check if the user pressed cancel while we were busy
@@ -185,18 +213,11 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
                 return IngestModule.ProcessResult.OK
 
             self.log(Level.INFO, "Processing file: " + str(file.getName()))
-            if "downloads.txt" in file.getName():
+            #ongoing downloads
+            '''
+            if "downloads.txt" in file.getName(): 
                 configFilesPath = os.path.join(Case.getCurrentCase().getTempDirectory(), str(file.getName()))
                 ContentUtils.writeToFile(file, File(configFilesPath))
-
-                #art = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT)
-
-
-                #art.addAttribute(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(), EmuleIngestModuleFactory.moduleName, "Emule5 Info"))
-                #IngestServices.getInstance().fireModuleDataEvent(ModuleDataEvent(EmuleIngestModuleFactory.moduleName, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, None))
-
-                #att = BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, EmuleIngestModuleFactory.moduleName, str(file.getName()))
-                #art.addAttribute(att)
 
                 self.log(Level.INFO, "Path")
 
@@ -222,11 +243,97 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
 
                 IngestServices.getInstance().fireModuleDataEvent(ModuleDataEvent(EmuleIngestModuleFactory.moduleName, artID_pf_evt, None))
            
-
                 f.close()
                 report.close()
+            '''
+
+            #Settings 
+            if "preferences.ini" in file.getName():
+                configFilesPath = os.path.join(Case.getCurrentCase().getTempDirectory(), str(file.getName()))
+                ContentUtils.writeToFile(file, File(configFilesPath))
+
+                f = open(configFilesPath, 'r')
+
+                for line in f:
+                    if "Nick=" in line and "IRC" not in line:
+                        nick = line.rsplit('=', 1)[1]
+                        report.write(str(line))
+                    if "AppVersion=" in line:
+                        appVersion = line.rsplit('=', 1)[1]
+                        report.write(str(line))
+                    if "Language=" in line:
+                        lang = line.rsplit('=', 1)[1]
+
+                        if int(lang) == 1034: 
+                            lang = "Spanish"
+
+                        report.write("Language=" + lang +"\n")
+
+                    if "IncomingDir=" in line:
+                        incomingDir = line.rsplit('=', 1)[1]
+
+
+                art = file.newArtifact(artID_ef)
+                art.addAttributes(((BlackboardAttribute(attID_pf_fn, EmuleIngestModuleFactory.moduleName, nick)), \
+                (BlackboardAttribute(attID_pf_an, EmuleIngestModuleFactory.moduleName, appVersion)), \
+                (BlackboardAttribute(attID_ef_ln, EmuleIngestModuleFactory.moduleName, lang)), \
+                (BlackboardAttribute(attID_ef_id, EmuleIngestModuleFactory.moduleName, incomingDir))))
+
+                IngestServices.getInstance().fireModuleDataEvent(ModuleDataEvent(EmuleIngestModuleFactory.moduleName, artID_ef_evt, None))
+                f.close()
+                
+
+            if "statistics.ini" in file.getName():
+                configFilesPath = os.path.join(Case.getCurrentCase().getTempDirectory(), str(file.getName()))
+                ContentUtils.writeToFile(file, File(configFilesPath))
+
+                f2 = open(configFilesPath, 'r')
+
+                for line in f2:
+                    if "DownSessionCompletedFiles=" in line:
+                        completedFiles = line.rsplit('=', 1)[1]
+
+                    if "TotalDownloadedBytes=" in line:
+                        donwladedBytes = line.rsplit('=', 1)[1]
+
+                art = file.newArtifact(artID_ef)
+
+                art.addAttributes(((BlackboardAttribute(attID_ef_cf, EmuleIngestModuleFactory.moduleName, completedFiles)), \
+                (BlackboardAttribute(attID_ef_db, EmuleIngestModuleFactory.moduleName, donwladedBytes))))
+
+                IngestServices.getInstance().fireModuleDataEvent(ModuleDataEvent(EmuleIngestModuleFactory.moduleName, artID_ef_evt, None))
+
+            #Userhash 
+            if "Preferences.dat" in file.getName():
+                configFilesPath = os.path.join(Case.getCurrentCase().getTempDirectory(), str(file.getName()))
+                ContentUtils.writeToFile(file, File(configFilesPath))
+
+            #Search words last used
+            if "AC_SearchStrings.dat" in file.getName():
+                configFilesPath = os.path.join(Case.getCurrentCase().getTempDirectory(), str(file.getName()))
+                ContentUtils.writeToFile(file, File(configFilesPath))
+
+            #Information about all files that have been downloaded 
+            if "known.met" in file.getName():
+                configFilesPath = os.path.join(Case.getCurrentCase().getTempDirectory(), str(file.getName()))
+                ContentUtils.writeToFile(file, File(configFilesPath))
+
+                fobj = open(configFilesPath, "rb")
+                filesize = os.path.getsize(configFilesPath)
+
+                for i in range(filesize):  # i = index. Offset to actual serach position in fileobject
+                    fobj.seek(i,0)
+                    charakter = (fobj.read(4))
+
+                    
+
+
+
+
+   
 
         self.log(Level.INFO, "Fin ")
+        report.close()
         #Post a message to the ingest messages in box.
         message = IngestMessage.createMessage(IngestMessage.MessageType.DATA,
             "Sample Jython Data Source Ingest Module", "Found %d files" % fileCount)
