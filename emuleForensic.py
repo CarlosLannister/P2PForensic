@@ -34,6 +34,8 @@
 import jarray
 import inspect
 import os
+import binascii 
+from emule import *
 
 from java.lang import System
 from java.sql  import DriverManager, SQLException
@@ -125,6 +127,10 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
     # TODO: Add any setup code that you need here.
     def startUp(self, context):
         self.context = context
+
+        #self.path_to_exe = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".exe")
+        #if not os.path.exists(self.path_to_exe):
+        #    raise IngestModuleException("EXE was not found in module folder")
         # Throw an IngestModule.IngestModuleException exception if there was a problem setting up
 		# raise IngestModuleException("Oh No!")
 
@@ -313,8 +319,12 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
                 configFilesPath = os.path.join(Case.getCurrentCase().getTempDirectory(), str(file.getName()))
                 ContentUtils.writeToFile(file, File(configFilesPath))
 
+
+            
+
             #Information about all files that have been downloaded 
             if "known.met" in file.getName():
+
                 configFilesPath = os.path.join(Case.getCurrentCase().getTempDirectory(), str(file.getName()))
                 ContentUtils.writeToFile(file, File(configFilesPath))
 
@@ -324,8 +334,21 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
                 for i in range(filesize):  # i = index. Offset to actual serach position in fileobject
                     fobj.seek(i,0)
                     charakter = (fobj.read(4))
+                    self.log(Level.INFO, "Testing1")
+                    if charakter == b"\x02\x01\x00\x01":
 
-                    
+                        block = getblockofdata(i,fobj, filesize)
+                        filename = carvefilename(block)
+                        filesizeentry = carvefilesize(block)
+                        totalupload = carvetotalupload(block)
+                        requests = carverequests(block)
+                        acceptedrequests = carveacceptedrequests(block)
+                        uploadpriority = carveuploadpriority(block)
+                        partfile = carvepartfile(block)
+                        self.log(Level.INFO, "Testing")
+                        self.log(Level.INFO, filename)
+          
+
 
 
 
@@ -340,3 +363,4 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
         IngestServices.getInstance().postMessage(message)
 
         return IngestModule.ProcessResult.OK;
+
