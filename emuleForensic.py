@@ -36,6 +36,7 @@ import inspect
 import os
 import binascii 
 from emule import *
+import string
 
 from java.lang import System
 from java.sql  import DriverManager, SQLException
@@ -151,112 +152,134 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
         skCase = Case.getCurrentCase().getSleuthkitCase();
 
         try:
-             self.log(Level.INFO, "Begin Create New Artifacts")
-             artID_ef = skCase.addArtifactType( "TSK_EMULE", "Emule Forensic")
+            self.log(Level.INFO, "Begin Create New Artifacts")
+            attID_eu = skCase.addArtifactType( "TSK_EMULE", "Emule User Info")
         except:     
-             self.log(Level.INFO, "Artifacts Creation Error, some artifacts may not exist now. ==> ")
-             artID_pf = skCase.getArtifactTypeID("TSK_EMULE")
+            self.log(Level.INFO, "Artifacts Creation Error, some artifacts may not exist now. ==> ")
+            attID_eu = skCase.getArtifactTypeID("TSK_EMULE")
+
+        try: 
+            artID_usage = skCase.addArtifactType( "TSK_EMULE_USAGE", "Emule Usage Info")
+        except:   
+            self.log(Level.INFO, "Artifacts Creation Error, some artifacts may not exist now. ==> ")
+            artID_usage = skCase.getArtifactTypeID("TSK_EMULE_USAGE")
 
         try:
-             self.log(Level.INFO, "Begin Create New Artifacts")
-             artID_ed2k = skCase.addArtifactType( "TSK_FILES", "Emule Files Downloaded")
+            artID_files = skCase.addArtifactType( "TSK_FILES", "Emule Files Downloaded")
         except:     
-             self.log(Level.INFO, "Artifacts Creation Error, some artifacts may not exist now. ==> ")
-             artID_ed2k = skCase.getArtifactTypeID("TSK_FILES")
+            self.log(Level.INFO, "Artifacts Creation Error, some artifacts may not exist now. ==> ")
+            artID_files = skCase.getArtifactTypeID("TSK_FILES")
 
         try:
-             self.log(Level.INFO, "Begin Create New Artifacts")
-             artID_ed2k = skCase.addArtifactType( "TSK_ED2K", "Emule Ongoing Downloads")
+            artID_ed2k = skCase.addArtifactType( "TSK_ED2K", "Emule Ongoing Downloads")
         except:     
-             self.log(Level.INFO, "Artifacts Creation Error, some artifacts may not exist now. ==> ")
-             artID_ed2k = skCase.getArtifactTypeID("TSK_ED2K")
+            self.log(Level.INFO, "Artifacts Creation Error, some artifacts may not exist now. ==> ")
+            artID_ed2k = skCase.getArtifactTypeID("TSK_ED2K")
+
 
 
         try:
-            attID_ed2k_link = skCase.addArtifactAttributeType("TSK_ED2K", BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "ED2K Link")
+            attID_ed2k_link = skCase.addArtifactAttributeType("TSK_EMULE_SEARCHES", BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "Emule Searches")
         except:     
-             self.log(Level.INFO, "Attributes Creation Error, Nickname. ==> ")
+            self.log(Level.INFO, "Attributes Creation Error, ED2K Link. ==> ")
 
+        try:
+            attID_ed2k_link = skCase.addArtifactAttributeType("TSK_ED2K_LINK", BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "ED2K Link")
+        except:     
+            self.log(Level.INFO, "Attributes Creation Error, ED2K Link. ==> ")
+
+        try:
+            attID_partfile = skCase.addArtifactAttributeType("TSK_ED2K_PARTFILE", BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "Partfile")
+        except:     
+            self.log(Level.INFO, "Attributes Creation Error, ED2K Link. ==> ")
 
         # Create the attribute type, if it exists then catch the error
         try:
-            attID_ef_username = skCase.addArtifactAttributeType("TSK_EMULE_USERNAME", BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "Nickname")
+            attID_username = skCase.addArtifactAttributeType("TSK_EMULE_USERNAME", BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "Nickname")
         except:     
-             self.log(Level.INFO, "Attributes Creation Error, Nickname. ==> ")
+            self.log(Level.INFO, "Attributes Creation Error, Nickname. ==> ")
 
         try:
-            attID_ef_version = skCase.addArtifactAttributeType("TSK_EMULE_VERSION", BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "Emule Version")           
+            attID_version = skCase.addArtifactAttributeType("TSK_EMULE_VERSION", BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "Emule Version")           
         except:     
-             self.log(Level.INFO, "Attributes Creation Error, Emule version ")
+            self.log(Level.INFO, "Attributes Creation Error, Emule version ")
 
         try:
-            attID_ef_language = skCase.addArtifactAttributeType("TSK_EMULE_LANGUAGE", BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "Emule Language")           
+            attID_language = skCase.addArtifactAttributeType("TSK_EMULE_LANGUAGE", BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "Emule Language")           
         except:     
-             self.log(Level.INFO, "Attributes Creation Error, Emule language")
+            self.log(Level.INFO, "Attributes Creation Error, Emule language")
 
         try:
-            attID_ef_incoming_dir = skCase.addArtifactAttributeType("TSK_EMULE_INCOMING", BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "Incoming Dir")           
+            attID_incoming_dir = skCase.addArtifactAttributeType("TSK_EMULE_INCOMING", BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "Incoming Dir")           
         except:     
-             self.log(Level.INFO, "Attributes Creation Error, Incoming Dir")
+            self.log(Level.INFO, "Attributes Creation Error, Incoming Dir")
 
         try:
-            attID_ef_completed_files = skCase.addArtifactAttributeType("TSK_EMULE_COMPLETED_FILES", BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "Completed Files")           
+            attID_completed_files = skCase.addArtifactAttributeType("TSK_EMULE_COMPLETED_FILES", BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "Completed Files")           
         except:     
-             self.log(Level.INFO, "Attributes Creation Error, Completed Files ")
+            self.log(Level.INFO, "Attributes Creation Error, Completed Files ")
 
         try:
-            attID_ef_downloaded_bytes = skCase.addArtifactAttributeType("TSK_EMULE_DONLOADED_BYTES", BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "Downloaded Bytes")           
+            attID_downloaded_bytes = skCase.addArtifactAttributeType("TSK_EMULE_DONLOADED_BYTES", BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "Downloaded Bytes")           
         except:     
-             self.log(Level.INFO, "Attributes Creation Error, Downloaded Bytes")
+            self.log(Level.INFO, "Attributes Creation Error, Downloaded Bytes")
 
 
         try:
             attID_ed2k_filename = skCase.addArtifactAttributeType("TSK_EMULE_FILENAME", BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "Filename")           
         except:     
-             self.log(Level.INFO, "Attributes Creation Error, Downloaded Bytes")
+            self.log(Level.INFO, "Attributes Creation Error, Downloaded Bytes")
 
         try:
             attID_ed2k_filesize = skCase.addArtifactAttributeType("TSK_EMULE_ED2K_FILESIZE", BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "Filesize")           
         except:     
-             self.log(Level.INFO, "Attributes Creation Error, Downloaded Bytes")
+            self.log(Level.INFO, "Attributes Creation Error, Downloaded Bytes")
         
         try:
             attID_ed2k_partfile = skCase.addArtifactAttributeType("TSK_EMULE_ED2K_PARTFILE", BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "Partfile")           
         except:     
-             self.log(Level.INFO, "Attributes Creation Error, Downloaded Bytes")
+            self.log(Level.INFO, "Attributes Creation Error, Downloaded Bytes")
 
         try:
             attID_ed2k_request = skCase.addArtifactAttributeType("TSK_EMULE_ED2K_REQUEST", BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "Requests")           
         except:     
-             self.log(Level.INFO, "Attributes Creation Error, Downloaded Bytes")
+            self.log(Level.INFO, "Attributes Creation Error, Downloaded Bytes")
 
         try:
             attID_ed2k_accepted = skCase.addArtifactAttributeType("TSK_EMULE_ED2K_ACCEPTED", BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "Accepted Requests")           
         except:     
-             self.log(Level.INFO, "Attributes Creation Error, Downloaded Bytes")
+            self.log(Level.INFO, "Attributes Creation Error, Downloaded Bytes")
 
         try:
             attID_ed2k_uploaded = skCase.addArtifactAttributeType("TSK_EMULE_ED2K_UPLOADED", BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "Uploaded")           
         except:     
-             self.log(Level.INFO, "Attributes Creation Error, Downloaded Bytes")
+            self.log(Level.INFO, "Attributes Creation Error, Downloaded Bytes")
 
         try:
             attID_ed2k_priority = skCase.addArtifactAttributeType("TSK_EMULE_ED2K_PRIORITY", BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "Priority")           
         except:     
-             self.log(Level.INFO, "Attributes Creation Error, Downloaded Bytes")
+            self.log(Level.INFO, "Attributes Creation Error, Downloaded Bytes")
 
 
 
 
-        artID_ef = skCase.getArtifactTypeID("TSK_EMULE")
-        artID_ef_evt = skCase.getArtifactType("TSK_EMULE")
-        attID_pf_fn = skCase.getAttributeType("TSK_EMULE_USERNAME")
-        attID_pf_an = skCase.getAttributeType("TSK_EMULE_VERSION")
-        attID_ef_ln = skCase.getAttributeType("TSK_EMULE_LANGUAGE")
-        attID_ef_id = skCase.getAttributeType("TSK_EMULE_INCOMING")
-        attID_ef_cf = skCase.getAttributeType("TSK_EMULE_COMPLETED_FILES")
-        attID_ef_db = skCase.getAttributeType("TSK_EMULE_DONLOADED_BYTES")
+        #Emule User Info
+        attID_eu = skCase.getArtifactTypeID("TSK_EMULE")
+        attID_eu_evt = skCase.getArtifactType("TSK_EMULE")
+        attID_fn = skCase.getAttributeType("TSK_EMULE_USERNAME")
+        attID_ev = skCase.getAttributeType("TSK_EMULE_VERSION")
+        attID_ln = skCase.getAttributeType("TSK_EMULE_LANGUAGE")
+        attID_inc = skCase.getAttributeType("TSK_EMULE_INCOMING")
+        attID_cf = skCase.getAttributeType("TSK_EMULE_COMPLETED_FILES")
+        attID_db = skCase.getAttributeType("TSK_EMULE_DONLOADED_BYTES")
 
+        #Emule usage info
+        attID_usage = skCase.getArtifactTypeID("TSK_EMULE_USAGE")
+        attID_usage_evt = skCase.getArtifactType("TSK_EMULE_USAGE")
+        attID_emule_searches = skCase.getAttributeType("TSK_EMULE_SEARCHES")
+
+
+        #Emule File Downloads
         artID_ed2k_files = skCase.getArtifactTypeID("TSK_FILES")
         artID_ed2k_files_evt = skCase.getArtifactType("TSK_FILES")
         attID_ed2k_filename = skCase.getAttributeType("TSK_EMULE_FILENAME")
@@ -268,9 +291,12 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
         attID_ed2k_partfile = skCase.getAttributeType("TSK_EMULE_ED2K_PARTFILE")
 
 
+        #Ongoing Downloads - ED2K links
         artID_ed2k = skCase.getArtifactTypeID("TSK_ED2K")
         artID_ed2k_evt = skCase.getArtifactType("TSK_ED2K")
-        attID_ed2k_link = skCase.getAttributeType("TSK_ED2K")
+        attID_ed2k_link = skCase.getAttributeType("TSK_ED2K_LINK")
+        attID_partfile = skCase.getAttributeType("TSK_ED2K_PARTFILE")
+
 
 
         emuleTorrentConfigFiles = fileManager.findFiles(dataSource, "%", "Local/eMuleTorrent")
@@ -281,7 +307,6 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
         report = open(reportPath, 'w')
 
         fileCount = 0;
-
 
 
         for file in emuleConfigFiles:
@@ -319,15 +344,15 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
                         incomingDir = line.rsplit('=', 1)[1]
 
 
-                art = file.newArtifact(artID_ef)
-                art.addAttributes(((BlackboardAttribute(attID_pf_fn, EmuleIngestModuleFactory.moduleName, nick)), \
-                (BlackboardAttribute(attID_pf_an, EmuleIngestModuleFactory.moduleName, appVersion)), \
-                (BlackboardAttribute(attID_ef_ln, EmuleIngestModuleFactory.moduleName, lang)), \
-                (BlackboardAttribute(attID_ef_id, EmuleIngestModuleFactory.moduleName, incomingDir)), \
-                (BlackboardAttribute(attID_ef_cf, EmuleIngestModuleFactory.moduleName, '')), \
-                (BlackboardAttribute(attID_ef_db, EmuleIngestModuleFactory.moduleName, ''))))
+                art = file.newArtifact(attID_eu)
+                art.addAttributes(((BlackboardAttribute(attID_fn, EmuleIngestModuleFactory.moduleName, nick)), \
+                (BlackboardAttribute(attID_ev, EmuleIngestModuleFactory.moduleName, appVersion)), \
+                (BlackboardAttribute(attID_ln, EmuleIngestModuleFactory.moduleName, lang)), \
+                (BlackboardAttribute(attID_inc, EmuleIngestModuleFactory.moduleName, incomingDir)), \
+                (BlackboardAttribute(attID_cf, EmuleIngestModuleFactory.moduleName, '')), \
+                (BlackboardAttribute(attID_db, EmuleIngestModuleFactory.moduleName, ''))))
 
-                IngestServices.getInstance().fireModuleDataEvent(ModuleDataEvent(EmuleIngestModuleFactory.moduleName, artID_ef_evt, None))
+                IngestServices.getInstance().fireModuleDataEvent(ModuleDataEvent(EmuleIngestModuleFactory.moduleName, attID_eu_evt, None))
                 f.close()
                 
 
@@ -344,15 +369,15 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
                     if "TotalDownloadedBytes=" in line:
                         donwladedBytes = line.rsplit('=', 1)[1]
 
-                art = file.newArtifact(artID_ef)
+                art = file.newArtifact(attID_eu)
 
-                art.addAttributes(((BlackboardAttribute(attID_ef_cf, EmuleIngestModuleFactory.moduleName, completedFiles)), \
-                (BlackboardAttribute(attID_ef_db, EmuleIngestModuleFactory.moduleName, donwladedBytes))))
+                art.addAttributes(((BlackboardAttribute(attID_cf, EmuleIngestModuleFactory.moduleName, completedFiles)), \
+                (BlackboardAttribute(attID_db, EmuleIngestModuleFactory.moduleName, donwladedBytes))))
 
-                IngestServices.getInstance().fireModuleDataEvent(ModuleDataEvent(EmuleIngestModuleFactory.moduleName, artID_ef_evt, None))
+                IngestServices.getInstance().fireModuleDataEvent(ModuleDataEvent(EmuleIngestModuleFactory.moduleName, attID_eu_evt, None))
 
             #Userhash 
-            if "Preferences.dat" in file.getName():
+            if "preferences.dat" in file.getName():
                 configFilesPath = os.path.join(Case.getCurrentCase().getTempDirectory(), str(file.getName()))
                 ContentUtils.writeToFile(file, File(configFilesPath))
 
@@ -360,6 +385,21 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
             if "AC_SearchStrings.dat" in file.getName():
                 configFilesPath = os.path.join(Case.getCurrentCase().getTempDirectory(), str(file.getName()))
                 ContentUtils.writeToFile(file, File(configFilesPath))
+                f = open(configFilesPath)
+                searches = '' 
+                for line in f: 
+                    self.log(Level.INFO, "Text2")
+                    searches = line.replace("\00", "")
+                    searches = searches.encode('ascii',errors='ignore')
+                    
+                    self.log(Level.INFO, searches)
+
+                    art = file.newArtifact(attID_usage)
+                    
+                    if len(searches) > 0:
+                        art.addAttribute(BlackboardAttribute(attID_emule_searches, EmuleIngestModuleFactory.moduleName, searches))
+                        IngestServices.getInstance().fireModuleDataEvent(ModuleDataEvent(EmuleIngestModuleFactory.moduleName, attID_usage_evt, None))
+
 
             
             #ongoing downloads
@@ -371,18 +411,19 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
                 for line in f:
                     ed2k = line.replace("\00", "")
                     if "part" in ed2k:
-                        self.log(Level.INFO, "Testing9 ed2k")
-                        self.log(Level.INFO, ed2k)
-
                         art = file.newArtifact(artID_ed2k)
-                        art.addAttribute(BlackboardAttribute(attID_ed2k_link, EmuleIngestModuleFactory.moduleName, ed2k))
+
+                        ed2k = ed2k.split('part')
+                        partfile = ed2k[0] + "part"
+                        ed2kLinks = ed2k[1].strip()
+
+                        art.addAttribute(BlackboardAttribute(attID_ed2k_link, EmuleIngestModuleFactory.moduleName, ed2kLinks))
+                        art.addAttribute(BlackboardAttribute(attID_partfile, EmuleIngestModuleFactory.moduleName, partfile))
                         IngestServices.getInstance().fireModuleDataEvent(ModuleDataEvent(EmuleIngestModuleFactory.moduleName, artID_ed2k_evt, None))
 
             
             #Information about all files that have been downloaded 
             if "known.met" in file.getName():
-                
-
                 configFilesPath = os.path.join(Case.getCurrentCase().getTempDirectory(), str(file.getName()))
                 ContentUtils.writeToFile(file, File(configFilesPath))
 
@@ -393,7 +434,6 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
                     fobj.seek(i,0)
                     charakter = (fobj.read(4))
 
-                    
                     if charakter == b"\x02\x01\x00\x01":
                         block = getblockofdata(i,fobj, filesize)
                         filename = carvefilename(block)
