@@ -17,15 +17,15 @@ class KnownMet(KaitaiStruct):
         self._root = _root if _root else self
         self.magic = self._io.read_bytes(1)
         self.n_entries = self._io.read_u4le()
-        self.file = [None] * self.n_entries
+        self.entries = [None] * self.n_entries
         for i in xrange(self.n_entries):
-            self.file[i] = self._root.File(self._io, self, self._root)
+            self.entries[i] = self._root.Entry(self._io, self, self._root)
 
 
-    class File(KaitaiStruct):
+    class Entry(KaitaiStruct):
         @staticmethod
         def from_file(filename):
-            return File(KaitaiStream(open(filename, 'rb')))
+            return Entry(KaitaiStream(open(filename, 'rb')))
 
         def __init__(self, _io, _parent = None, _root = None):
             self._io = _io

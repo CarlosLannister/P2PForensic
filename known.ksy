@@ -6,8 +6,8 @@ seq:
     size: 1
   - id: n_entries
     type: u4
-  - id: file
-    type: file
+  - id: entries
+    type: entry
     repeat: expr
     repeat-expr: n_entries
 enums:
@@ -20,7 +20,7 @@ enums:
     0x09: byte
     0x0b: uint64
 types:
-  file:
+  entry:
     seq:
       - id: last_written
         type: u4
