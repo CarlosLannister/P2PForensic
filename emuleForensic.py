@@ -1,35 +1,8 @@
-# Sample module in the public domain. Feel free to use this as a template
-# for your modules (and you can remove this header and take complete credit
-# and liability)
-#
-# Contact: Brian Carrier [carrier <at> sleuthkit [dot] org]
-#
-# This is free and unencumbered software released into the public domain.
-#
-# Anyone is free to copy, modify, publish, use, compile, sell, or
-# distribute this software, either in source code form or as a compiled
-# binary, for any purpose, commercial or non-commercial, and by any
-# means.
-#
-# In jurisdictions that recognize copyright laws, the author or authors
-# of this software dedicate any and all copyright interest in the
-# software to the public domain. We make this dedication for the benefit
-# of the public at large and to the detriment of our heirs and
-# successors. We intend this dedication to be an overt act of
-# relinquishment in perpetuity of all present and future rights to this
-# software under copyright law.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-# IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR
-# OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
-# ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
-# OTHER DEALINGS IN THE SOFTWARE.
+#P2P Emule Forensic module
+#Lazarus technology
 
-# Simple data source-level ingest module for Autopsy.
-# Search for TODO for the things that you need to change
-# See http://sleuthkit.org/autopsy/docs/api-docs/3.1/index.html for documentation
+# Contact: Carlos Cilleruelo [carlos.cilleruelo <at> edu [dot] uah [dot] es]
+
 
 import jarray
 import inspect
@@ -37,7 +10,7 @@ import os
 import binascii 
 from emule import *
 import string
-
+import time
 
 from java.lang import System
 from java.sql  import DriverManager, SQLException
@@ -85,20 +58,16 @@ from org.sleuthkit.autopsy.datamodel import ContentUtils
 # from org.sleuthkit.autopsy.casemodule.services import Blackboard
 
 
-# Factory that defines the name and details of the module and allows Autopsy
-# to create instances of the modules that will do the analysis.
-# TODO: Rename this to something more specific. Search and replace for it because it is used a few times
+
 class EmuleIngestModuleFactory(IngestModuleFactoryAdapter):
 
-    # TODO: give it a unique name.  Will be shown in module list, logs, etc.
     moduleName = "P2P Forensic Emule module"
 
     def getModuleDisplayName(self):
         return self.moduleName
 
-    # TODO: Give it a description
     def getModuleDescription(self):
-        return "Emule Forensic Extraction"
+        return "Emule Forensic Analysis"
 
     def getModuleVersionNumber(self):
         return "1.0"
@@ -107,12 +76,10 @@ class EmuleIngestModuleFactory(IngestModuleFactoryAdapter):
         return True
 
     def createDataSourceIngestModule(self, ingestOptions):
-        # TODO: Change the class name to the name you'll make below
         return EmuleDataSourceIngestModule()
 
 
-# Data Source-level ingest module.  One gets created per data source.
-# TODO: Rename this to something more specific. Could just remove "Factory" from above name.
+
 class EmuleDataSourceIngestModule(DataSourceIngestModule):
 
     _logger = Logger.getLogger(EmuleIngestModuleFactory.moduleName)
@@ -123,10 +90,7 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
     def __init__(self):
         self.context = None
 
-    # Where any setup and configuration is done
-    # 'context' is an instance of org.sleuthkit.autopsy.ingest.IngestJobContext.
-    # See: http://sleuthkit.org/autopsy/docs/api-docs/3.1/classorg_1_1sleuthkit_1_1autopsy_1_1ingest_1_1_ingest_job_context.html
-    # TODO: Add any setup code that you need here.
+
     def startUp(self, context):
         self.context = context
 
@@ -136,19 +100,13 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
         # Throw an IngestModule.IngestModuleException exception if there was a problem setting up
 		# raise IngestModuleException("Oh No!")
 
-    # Where the analysis is done.
-    # The 'dataSource' object being passed in is of type org.sleuthkit.datamodel.Content.
-    # See: http://www.sleuthkit.org/sleuthkit/docs/jni-docs/4.3/interfaceorg_1_1sleuthkit_1_1datamodel_1_1_content.html
-    # 'progressBar' is of type org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress
-    # See: http://sleuthkit.org/autopsy/docs/api-docs/3.1/classorg_1_1sleuthkit_1_1autopsy_1_1ingest_1_1_data_source_ingest_module_progress.html
-    # TODO: Add your analysis code in here.
+
     def process(self, dataSource, progressBar):
 
         # we don't know how much work there is yet
-        progressBar.switchToIndeterminate()
+        #progressBar.switchToIndeterminate()
    
         fileManager = Case.getCurrentCase().getServices().getFileManager()
-
 
         skCase = Case.getCurrentCase().getSleuthkitCase();
 
@@ -177,7 +135,21 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
             self.log(Level.INFO, "Artifacts Creation Error, some artifacts may not exist now. ==> ")
             artID_ed2k = skCase.getArtifactTypeID("TSK_ED2K")
 
+        try:
+            artID_incoming_folder = skCase.addArtifactType( "TSK_INCOMING_FOLDER", "Incoming Folder")
+        except:     
+            self.log(Level.INFO, "Artifacts Creation Error, some artifacts may not exist now. ==> ")
+            artID_ed2k = skCase.getArtifactTypeID("TSK_INCONMING_FOLDER")
 
+        try:
+            attID_incoming_file = skCase.addArtifactAttributeType("TSK_MD5_HASH", BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "MD5 Hash")
+        except:     
+            self.log(Level.INFO, "Attributes Creation Error, ED2K Link. ==> ")
+
+        try:
+            attID_incoming_file = skCase.addArtifactAttributeType("TSK_CREATED_TIME", BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "Created Time")
+        except:     
+            self.log(Level.INFO, "Attributes Creation Error, ED2K Link. ==> ")
 
         try:
             attID_ed2k_link = skCase.addArtifactAttributeType("TSK_EMULE_SEARCHES", BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "Emule Searches")
@@ -230,7 +202,6 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
         except:     
             self.log(Level.INFO, "Attributes Creation Error, Downloaded Bytes")
 
-
         try:
             attID_filename = skCase.addArtifactAttributeType("TSK_EMULE_FILENAME", BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "Filename")           
         except:     
@@ -265,8 +236,6 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
             attID_priority = skCase.addArtifactAttributeType("TSK_EMULE_ED2K_PRIORITY", BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "Priority")           
         except:     
             self.log(Level.INFO, "Attributes Creation Error, Downloaded Bytes")
-
-
 
 
         #Emule User Info
@@ -305,14 +274,17 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
         attID_ed2k_link = skCase.getAttributeType("TSK_ED2K_LINK")
         attID_ed2k_partfile = skCase.getAttributeType("TSK_ED2K_PARTFILE")
 
+        #Incoming folder
+        artID_incoming_folder = skCase.getArtifactTypeID("TSK_INCOMING_FOLDER")
+        artID_incoming_evt = skCase.getArtifactType("TSK_INCOMING_FOLDER")
+        attID_md5_hash = skCase.getAttributeType("TSK_MD5_HASH")
+        attID_crtime = skCase.getAttributeType("TSK_CREATED_TIME")
+        
 
-
-        emuleTorrentConfigFiles = fileManager.findFiles(dataSource, "%", "Local/eMuleTorrent")
         emuleConfigFiles = fileManager.findFiles(dataSource, "%", "/AppData/Local/eMule/config")
+        #emuleTorrentConfigFiles = fileManager.findFiles(dataSource, "%", "Local/eMuleTorrent")
 
-        self.log(Level.INFO, "P2P emule Starting")
-        reportPath = os.path.join(Case.getCurrentCase().getCaseDirectory() + "/Reports", "userInfo.csv")
-        report = open(reportPath, 'w')
+        self.log(Level.INFO, "P2P Emule Module Starting")
 
         fileCount = 0;
 
@@ -337,24 +309,19 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
                 for line in f:
                     if "Nick=" in line and "IRC" not in line:
                         nick = line.rsplit('=', 1)[1]
-                        report.write(str(line))
                     if "AppVersion=" in line:
                         appVersion = line.rsplit('=', 1)[1]
-                        report.write(str(line))
                     if "Language=" in line:
                         lang = line.rsplit('=', 1)[1]
-
                         if int(lang) == 1034: 
                             lang = "Spanish"
-
-                        report.write("Language=" + lang +"\n")
-
                     if "IncomingDir=" in line:
                         incomingDir = line.rsplit('=', 1)[1]
 
 
                 art = file.newArtifact(attID_eu)
                 art.addAttributes(((BlackboardAttribute(attID_fn, EmuleIngestModuleFactory.moduleName, nick)), \
+                (BlackboardAttribute(attID_userhash, EmuleIngestModuleFactory.moduleName, '')), \
                 (BlackboardAttribute(attID_ev, EmuleIngestModuleFactory.moduleName, appVersion)), \
                 (BlackboardAttribute(attID_ln, EmuleIngestModuleFactory.moduleName, lang)), \
                 (BlackboardAttribute(attID_inc, EmuleIngestModuleFactory.moduleName, incomingDir))))
@@ -370,7 +337,7 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
                 f2 = open(configFilesPath, 'r')
 
                 for line in f2:
-                    if "DownSessionCompletedFiles=" in line:
+                    if "DownCompletedFiles=" in line:
                         completedFiles = line.rsplit('=', 1)[1]
 
                     if "TotalDownloadedBytes=" in line:
@@ -398,6 +365,8 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
                 art.addAttribute(BlackboardAttribute(attID_userhash, EmuleIngestModuleFactory.moduleName, userHash))
                 IngestServices.getInstance().fireModuleDataEvent(ModuleDataEvent(EmuleIngestModuleFactory.moduleName, attID_eu_evt, None))
 
+                fobj.close()
+
 
 
             #Search words last used
@@ -407,16 +376,11 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
                 f = open(configFilesPath)
                 searches = '' 
                 for line in f: 
-                    self.log(Level.INFO, "Text2")
                     searches = line.replace("\00", "")
                     searches = searches.encode('ascii',errors='ignore')
-                    
-                    self.log(Level.INFO, searches)
-
-                    art = file.newArtifact(attID_usage)
-
-                    if len(searches) > 0:
-                        art.addAttribute(BlackboardAttribute(attID_emule_searches, EmuleIngestModuleFactory.moduleName, searches))
+                    if len(str(searches)) > 0:
+                        art = file.newArtifact(attID_usage)
+                        art.addAttribute(BlackboardAttribute(attID_emule_searches, EmuleIngestModuleFactory.moduleName, searches.strip()))
                         IngestServices.getInstance().fireModuleDataEvent(ModuleDataEvent(EmuleIngestModuleFactory.moduleName, attID_usage_evt, None))
 
 
@@ -484,20 +448,28 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
 
         incomingFiles = fileManager.findFiles(dataSource, "%", str(incoming))
 
+        self.log(Level.INFO, "Fin5 ")
         self.log(Level.INFO, str(incoming))
         for file in incomingFiles:
-            self.log(Level.INFO, "Processing file: " + str(file.getName()))
-            md5 = file.getMd5Hash()
-            if md5 is None:
-                md5 = ''
+            if not ("." == file.getName()) and not (".." == file.getName()):
+    
+                self.log(Level.INFO, "Processing4 file: " + str(file.getCrtime()))
+                #getsize
+                md5 = file.getMd5Hash()
+                crtime = str(file.getCrtime())
+                crtime = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(float(crtime)))
+                if md5 is None:
+                    md5 = ''
 
+                art = file.newArtifact(artID_incoming_folder)
+                art.addAttribute(BlackboardAttribute(attID_md5_hash, EmuleIngestModuleFactory.moduleName, md5))
+                art.addAttribute(BlackboardAttribute(attID_crtime, EmuleIngestModuleFactory.moduleName, crtime))
+                IngestServices.getInstance().fireModuleDataEvent(ModuleDataEvent(EmuleIngestModuleFactory.moduleName, artID_incoming_evt, None))   
 
-            self.log(Level.INFO, "MD5: " + str(md5))
+                self.log(Level.INFO, "MD5: " + str(md5))
 
         
 
-        self.log(Level.INFO, "Fin5 ")
-        report.close()
         #Post a message to the ingest messages in box.
         message = IngestMessage.createMessage(IngestMessage.MessageType.DATA,
             "Sample Jython Data Source Ingest Module", "Found %d files" % fileCount)
