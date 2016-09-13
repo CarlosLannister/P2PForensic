@@ -38,6 +38,7 @@ import binascii
 from emule import *
 import string
 
+
 from java.lang import System
 from java.sql  import DriverManager, SQLException
 from java.util.logging import Level
@@ -215,6 +216,11 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
             self.log(Level.INFO, "Attributes Creation Error, Incoming Dir")
 
         try:
+            attID_userhash = skCase.addArtifactAttributeType("TSK_EMULE_USERHASH", BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "Userhash")
+        except:     
+            self.log(Level.INFO, "Attributes Creation Error, userhash")
+
+        try:
             attID_completed_files = skCase.addArtifactAttributeType("TSK_EMULE_COMPLETED_FILES", BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "Completed Files")           
         except:     
             self.log(Level.INFO, "Attributes Creation Error, Completed Files ")
@@ -267,6 +273,7 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
         attID_eu = skCase.getArtifactTypeID("TSK_EMULE")
         attID_eu_evt = skCase.getArtifactType("TSK_EMULE")
         attID_fn = skCase.getAttributeType("TSK_EMULE_USERNAME")
+        attID_userhash = skCase.getAttributeType("TSK_EMULE_USERHASH")
         attID_ev = skCase.getAttributeType("TSK_EMULE_VERSION")
         attID_ln = skCase.getAttributeType("TSK_EMULE_LANGUAGE")
         attID_inc = skCase.getAttributeType("TSK_EMULE_INCOMING")
@@ -325,6 +332,7 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
                 ContentUtils.writeToFile(file, File(configFilesPath))
 
                 f = open(configFilesPath, 'r')
+                incomingDir = ''
 
                 for line in f:
                     if "Nick=" in line and "IRC" not in line:
@@ -379,6 +387,18 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
             if "preferences.dat" in file.getName():
                 configFilesPath = os.path.join(Case.getCurrentCase().getTempDirectory(), str(file.getName()))
                 ContentUtils.writeToFile(file, File(configFilesPath))
+
+                fobj = open(configFilesPath, "rb")
+
+                block = (fobj.read(17))
+                block = binascii.hexlify(block)
+                userHash = (block[2:34])
+
+                art = file.newArtifact(attID_eu)
+                art.addAttribute(BlackboardAttribute(attID_userhash, EmuleIngestModuleFactory.moduleName, userHash))
+                IngestServices.getInstance().fireModuleDataEvent(ModuleDataEvent(EmuleIngestModuleFactory.moduleName, attID_eu_evt, None))
+
+
 
             #Search words last used
             if "AC_SearchStrings.dat" in file.getName():
@@ -456,7 +476,7 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
                         IngestServices.getInstance().fireModuleDataEvent(ModuleDataEvent(EmuleIngestModuleFactory.moduleName, attID_files_evt, None))   
 
 
-
+        
         incoming = incomingDir.split(':')
         incoming = str(incoming[1]).replace("\\", "/").strip()
         self.log(Level.INFO, incoming)
@@ -467,10 +487,15 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
         self.log(Level.INFO, str(incoming))
         for file in incomingFiles:
             self.log(Level.INFO, "Processing file: " + str(file.getName()))
+            md5 = file.getMd5Hash()
+            if md5 is None:
+                md5 = ''
 
-        #md5 = file.getMd5Hash()
-        #if md5 is None:
-        #    md5 = ""
+
+            self.log(Level.INFO, "MD5: " + str(md5))
+
+        
+
         self.log(Level.INFO, "Fin5 ")
         report.close()
         #Post a message to the ingest messages in box.
