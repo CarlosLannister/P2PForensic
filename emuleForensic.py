@@ -11,6 +11,7 @@ import binascii
 from emule import *
 import string
 import time
+from bencoder import *
 
 from java.lang import System
 from java.sql  import DriverManager, SQLException
@@ -443,24 +444,15 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
         
         incoming = incomingDir.split(':')
         incoming = str(incoming[1]).replace("\\", "/").strip()
-        self.log(Level.INFO, incoming)
-
-
         incomingFiles = fileManager.findFiles(dataSource, "%", str(incoming))
 
-        self.log(Level.INFO, "Fin5 ")
-        self.log(Level.INFO, str(incoming))
         for file in incomingFiles:
             if not ("." == file.getName()) and not (".." == file.getName()):
-    
-                self.log(Level.INFO, "Processing4 file: " + str(file.getCrtime()))
-                #getsize
                 md5 = file.getMd5Hash()
                 crtime = str(file.getCrtime())
                 crtime = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(float(crtime)))
                 if md5 is None:
                     md5 = ''
-
                 art = file.newArtifact(artID_incoming_folder)
                 art.addAttribute(BlackboardAttribute(attID_md5_hash, EmuleIngestModuleFactory.moduleName, md5))
                 art.addAttribute(BlackboardAttribute(attID_crtime, EmuleIngestModuleFactory.moduleName, crtime))
@@ -469,6 +461,34 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
                 self.log(Level.INFO, "MD5: " + str(md5))
 
         
+
+ 
+        #Utorrent Forensic \Roaming\uTorrent
+        uTorrentForensic = fileManager.findFiles(dataSource, "%", "/Roaming/uTorrent")
+
+        for file in uTorrentForensic:
+
+            if ".torrent" in file.getName():
+                self.log(Level.INFO, "Torrents File Added1")
+                self.log(Level.INFO, file.getName())
+
+            
+            if "resume.dat" in file.getName():
+                try:
+                    self.log(Level.INFO, "Resume")
+                    self.log(Level.INFO, file.getName())
+                    configFilesPath = os.path.join(Case.getCurrentCase().getTempDirectory(), str(file.getName()))
+                    ContentUtils.writeToFile(file, File(configFilesPath))
+
+                    f = open(configFilesPath, "rb")
+                    d = decode(f.read())
+
+                    self.log(Level.INFO, "Current1 Downloads")
+                    for line in d:
+                        self.log(Level.INFO, line)
+                except:   
+                    self.log(Level.INFO, "Error parsing resume.dat file")
+                
 
         #Post a message to the ingest messages in box.
         message = IngestMessage.createMessage(IngestMessage.MessageType.DATA,
