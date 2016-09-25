@@ -62,13 +62,13 @@ from org.sleuthkit.autopsy.datamodel import ContentUtils
 
 class EmuleIngestModuleFactory(IngestModuleFactoryAdapter):
 
-    moduleName = "P2P Forensic Emule module"
+    moduleName = "P2P Forensic module"
 
     def getModuleDisplayName(self):
         return self.moduleName
 
     def getModuleDescription(self):
-        return "Emule Forensic Analysis"
+        return "P2P clients forensic analysis"
 
     def getModuleVersionNumber(self):
         return "1.0"
