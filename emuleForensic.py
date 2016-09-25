@@ -104,19 +104,19 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
 
     def process(self, dataSource, progressBar):
 
-        # we don't know how much work there is yet
-        #progressBar.switchToIndeterminate()
    
         fileManager = Case.getCurrentCase().getServices().getFileManager()
 
         skCase = Case.getCurrentCase().getSleuthkitCase();
 
+        #Menu elements for Emule
+
         try:
             self.log(Level.INFO, "Begin Create New Artifacts")
-            attID_eu = skCase.addArtifactType( "TSK_EMULE", "Emule User Info")
+            artID_eu = skCase.addArtifactType( "TSK_EMULE", "Emule User Info")
         except:     
             self.log(Level.INFO, "Artifacts Creation Error, some artifacts may not exist now. ==> ")
-            attID_eu = skCase.getArtifactTypeID("TSK_EMULE")
+            artID_eu = skCase.getArtifactTypeID("TSK_EMULE")
 
         try: 
             artID_usage = skCase.addArtifactType( "TSK_EMULE_USAGE", "Emule Usage Info")
@@ -140,22 +140,43 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
             artID_incoming_folder = skCase.addArtifactType( "TSK_INCOMING_FOLDER", "Incoming Folder")
         except:     
             self.log(Level.INFO, "Artifacts Creation Error, some artifacts may not exist now. ==> ")
-            artID_ed2k = skCase.getArtifactTypeID("TSK_INCONMING_FOLDER")
+            artID_incoming_folder = skCase.getArtifactTypeID("TSK_INCONMING_FOLDER")
+
+        #Menu elements for Torrent clients
+
+        try:
+            artID_torrent_ongoing = skCase.addArtifactType( "TSK_TORRENT_ONGOING", "Torrent Ongoing downloads")
+        except:     
+            self.log(Level.INFO, "Artifacts Creation Error, some artifacts may not exist now. ==> ")
+            artID_torrent_ongoing = skCase.getArtifactTypeID("TSK_TORRENT_ONGOING")
+
+        try:
+            artID_torrent_added = skCase.addArtifactType( "TSK_TORRENTS", "Torrents added")
+        except:     
+            self.log(Level.INFO, "Artifacts Creation Error, some artifacts may not exist now. ==> ")
+            artID_torrent_added = skCase.getArtifactTypeID("TSK_TORRENTS")
+
+        #Menu Items
+
+        try:
+            attID_torrent_name = skCase.addArtifactAttributeType("TSK_TORRENT_NAME", BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "Torrent Name")
+        except:     
+            self.log(Level.INFO, "Attributes Creation Error, Torrent Name. ==> ")
 
         try:
             attID_incoming_file = skCase.addArtifactAttributeType("TSK_MD5_HASH", BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "MD5 Hash")
         except:     
-            self.log(Level.INFO, "Attributes Creation Error, ED2K Link. ==> ")
+            self.log(Level.INFO, "Attributes Creation Error, MD5 Hash. ==> ")
 
         try:
             attID_incoming_file = skCase.addArtifactAttributeType("TSK_CREATED_TIME", BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "Created Time")
         except:     
-            self.log(Level.INFO, "Attributes Creation Error, ED2K Link. ==> ")
+            self.log(Level.INFO, "Attributes Creation Error, Created time. ==> ")
 
         try:
             attID_ed2k_link = skCase.addArtifactAttributeType("TSK_EMULE_SEARCHES", BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "Emule Searches")
         except:     
-            self.log(Level.INFO, "Attributes Creation Error, ED2K Link. ==> ")
+            self.log(Level.INFO, "Attributes Creation Error, Emule Searches. ==> ")
 
         try:
             attID_ed2k_link = skCase.addArtifactAttributeType("TSK_ED2K_LINK", BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "ED2K Link")
@@ -165,9 +186,8 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
         try:
             attID_ed2k_partfile = skCase.addArtifactAttributeType("TSK_ED2K_PARTFILE", BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "Partfile")
         except:     
-            self.log(Level.INFO, "Attributes Creation Error, ED2K Link. ==> ")
+            self.log(Level.INFO, "Attributes Creation Error, Partfile. ==> ")
 
-        # Create the attribute type, if it exists then catch the error
         try:
             attID_username = skCase.addArtifactAttributeType("TSK_EMULE_USERNAME", BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "Nickname")
         except:     
@@ -191,7 +211,7 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
         try:
             attID_userhash = skCase.addArtifactAttributeType("TSK_EMULE_USERHASH", BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "Userhash")
         except:     
-            self.log(Level.INFO, "Attributes Creation Error, userhash")
+            self.log(Level.INFO, "Attributes Creation Error, Userhash")
 
         try:
             attID_completed_files = skCase.addArtifactAttributeType("TSK_EMULE_COMPLETED_FILES", BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, "Completed Files")           
@@ -240,8 +260,8 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
 
 
         #Emule User Info
-        attID_eu = skCase.getArtifactTypeID("TSK_EMULE")
-        attID_eu_evt = skCase.getArtifactType("TSK_EMULE")
+        artID_eu = skCase.getArtifactTypeID("TSK_EMULE")
+        artID_eu_evt = skCase.getArtifactType("TSK_EMULE")
         attID_fn = skCase.getAttributeType("TSK_EMULE_USERNAME")
         attID_userhash = skCase.getAttributeType("TSK_EMULE_USERHASH")
         attID_ev = skCase.getAttributeType("TSK_EMULE_VERSION")
@@ -280,7 +300,17 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
         artID_incoming_evt = skCase.getArtifactType("TSK_INCOMING_FOLDER")
         attID_md5_hash = skCase.getAttributeType("TSK_MD5_HASH")
         attID_crtime = skCase.getAttributeType("TSK_CREATED_TIME")
-        
+
+
+        #Torrent 
+        artID_torrent_added  = skCase.getArtifactTypeID("TSK_TORRENTS")
+        artID_torrent_evt = skCase.getArtifactType("TSK_TORRENTS")
+
+        artID_torrent_ongoing = skCase.getArtifactTypeID("TSK_TORRENT_ONGOING")
+        artID_torrentOng_evt = skCase.getArtifactTypeID("TSK_TORRENT_ONGOING")
+        attID_torrent_name = skCase.getAttributeType("TSK_TORRENT_NAME")
+
+
 
         emuleConfigFiles = fileManager.findFiles(dataSource, "%", "/AppData/Local/eMule/config")
         #emuleTorrentConfigFiles = fileManager.findFiles(dataSource, "%", "Local/eMuleTorrent")
@@ -296,10 +326,7 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
             if self.context.isJobCancelled():
                 return IngestModule.ProcessResult.OK
 
-            self.log(Level.INFO, "Processing file: " + str(file.getName()))
-            
-
-            #Settings 
+            #Emule Settings 
             if "preferences.ini" in file.getName():
                 configFilesPath = os.path.join(Case.getCurrentCase().getTempDirectory(), str(file.getName()))
                 ContentUtils.writeToFile(file, File(configFilesPath))
@@ -314,23 +341,24 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
                         appVersion = line.rsplit('=', 1)[1]
                     if "Language=" in line:
                         lang = line.rsplit('=', 1)[1]
-                        if int(lang) == 1034: 
+                        if int(lang) == 1034: #TODO add more id to lang 
                             lang = "Spanish"
                     if "IncomingDir=" in line:
                         incomingDir = line.rsplit('=', 1)[1]
 
 
-                art = file.newArtifact(attID_eu)
+                art = file.newArtifact(artID_eu)
                 art.addAttributes(((BlackboardAttribute(attID_fn, EmuleIngestModuleFactory.moduleName, nick)), \
                 (BlackboardAttribute(attID_userhash, EmuleIngestModuleFactory.moduleName, '')), \
                 (BlackboardAttribute(attID_ev, EmuleIngestModuleFactory.moduleName, appVersion)), \
                 (BlackboardAttribute(attID_ln, EmuleIngestModuleFactory.moduleName, lang)), \
                 (BlackboardAttribute(attID_inc, EmuleIngestModuleFactory.moduleName, incomingDir))))
 
-                IngestServices.getInstance().fireModuleDataEvent(ModuleDataEvent(EmuleIngestModuleFactory.moduleName, attID_eu_evt, None))
+                IngestServices.getInstance().fireModuleDataEvent(ModuleDataEvent(EmuleIngestModuleFactory.moduleName, artID_eu_evt, None))
                 f.close()
                 
 
+            # Emule statiscts
             if "statistics.ini" in file.getName():
                 configFilesPath = os.path.join(Case.getCurrentCase().getTempDirectory(), str(file.getName()))
                 ContentUtils.writeToFile(file, File(configFilesPath))
@@ -351,7 +379,7 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
 
                 IngestServices.getInstance().fireModuleDataEvent(ModuleDataEvent(EmuleIngestModuleFactory.moduleName, attID_usage_evt, None))
 
-            #Userhash 
+            #Emule Userhash 
             if "preferences.dat" in file.getName():
                 configFilesPath = os.path.join(Case.getCurrentCase().getTempDirectory(), str(file.getName()))
                 ContentUtils.writeToFile(file, File(configFilesPath))
@@ -362,13 +390,11 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
                 block = binascii.hexlify(block)
                 userHash = (block[2:34])
 
-                art = file.newArtifact(attID_eu)
+                art = file.newArtifact(artID_eu)
                 art.addAttribute(BlackboardAttribute(attID_userhash, EmuleIngestModuleFactory.moduleName, userHash))
-                IngestServices.getInstance().fireModuleDataEvent(ModuleDataEvent(EmuleIngestModuleFactory.moduleName, attID_eu_evt, None))
+                IngestServices.getInstance().fireModuleDataEvent(ModuleDataEvent(EmuleIngestModuleFactory.moduleName, artID_eu_evt, None))
 
                 fobj.close()
-
-
 
             #Search words last used
             if "AC_SearchStrings.dat" in file.getName():
@@ -384,9 +410,7 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
                         art.addAttribute(BlackboardAttribute(attID_emule_searches, EmuleIngestModuleFactory.moduleName, searches.strip()))
                         IngestServices.getInstance().fireModuleDataEvent(ModuleDataEvent(EmuleIngestModuleFactory.moduleName, attID_usage_evt, None))
 
-
-            
-            #ongoing downloads
+            #Ongoing downloads
             if "downloads.txt" in file.getName():
                 configFilesPath = os.path.join(Case.getCurrentCase().getTempDirectory(), str(file.getName()))
                 ContentUtils.writeToFile(file, File(configFilesPath))
@@ -414,7 +438,7 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
                 fobj = open(configFilesPath, "rb")
                 filesize = os.path.getsize(configFilesPath)
 
-                for i in range(filesize):  # i = index. Offset to actual serach position in fileobject
+                for i in range(filesize):  
                     fobj.seek(i,0)
                     charakter = (fobj.read(4))
 
@@ -442,11 +466,17 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
 
 
         
+        # If incoming dir is located 
         incoming = incomingDir.split(':')
         incoming = str(incoming[1]).replace("\\", "/").strip()
         incomingFiles = fileManager.findFiles(dataSource, "%", str(incoming))
 
         for file in incomingFiles:
+
+            # Check if the user pressed cancel while we were busy
+            if self.context.isJobCancelled():
+                return IngestModule.ProcessResult.OK
+
             if not ("." == file.getName()) and not (".." == file.getName()):
                 md5 = file.getMd5Hash()
                 crtime = str(file.getCrtime())
@@ -458,41 +488,42 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
                 art.addAttribute(BlackboardAttribute(attID_crtime, EmuleIngestModuleFactory.moduleName, crtime))
                 IngestServices.getInstance().fireModuleDataEvent(ModuleDataEvent(EmuleIngestModuleFactory.moduleName, artID_incoming_evt, None))   
 
-                self.log(Level.INFO, "MD5: " + str(md5))
 
-        
-
- 
-        #Utorrent Forensic \Roaming\uTorrent
+        # Utorrent Forensic \Roaming\uTorrent
         uTorrentForensic = fileManager.findFiles(dataSource, "%", "/Roaming/uTorrent")
 
         for file in uTorrentForensic:
 
-            if ".torrent" in file.getName():
-                self.log(Level.INFO, "Torrents File Added1")
-                self.log(Level.INFO, file.getName())
+            # Check if the user pressed cancel while we were busy
+            if self.context.isJobCancelled():
+                return IngestModule.ProcessResult.OK
 
+            # Files added to uTorrent, potentialy downloaded
+            if ".torrent" in file.getName():
+                art = file.newArtifact(artID_torrent_added)
+                IngestServices.getInstance().fireModuleDataEvent(ModuleDataEvent(EmuleIngestModuleFactory.moduleName, artID_torrent_evt, None))   
             
+            # Current downloads 
             if "resume.dat" in file.getName():
                 try:
-                    self.log(Level.INFO, "Resume")
-                    self.log(Level.INFO, file.getName())
                     configFilesPath = os.path.join(Case.getCurrentCase().getTempDirectory(), str(file.getName()))
                     ContentUtils.writeToFile(file, File(configFilesPath))
 
                     f = open(configFilesPath, "rb")
                     d = decode(f.read())
 
-                    self.log(Level.INFO, "Current1 Downloads")
                     for line in d:
                         self.log(Level.INFO, line)
+                        art = file.newArtifact(artID_torrent_ongoing)
+                        art.addAttribute(BlackboardAttribute(attID_torrent_name, EmuleIngestModuleFactory.moduleName, str(line)))
+                    IngestServices.getInstance().fireModuleDataEvent(ModuleDataEvent(EmuleIngestModuleFactory.moduleName, artID_torrentOng_evt, None))            
                 except:   
                     self.log(Level.INFO, "Error parsing resume.dat file")
                 
 
         #Post a message to the ingest messages in box.
         message = IngestMessage.createMessage(IngestMessage.MessageType.DATA,
-            "Sample Jython Data Source Ingest Module", "Found %d files" % fileCount)
+            "P2P Forensic Module Finish", "Found files")
         IngestServices.getInstance().postMessage(message)
 
         return IngestModule.ProcessResult.OK;
