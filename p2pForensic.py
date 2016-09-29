@@ -319,7 +319,8 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
 
         fileCount = 0;
 
-
+        incomingDir = ''
+        
         for file in emuleConfigFiles:
             
             # Check if the user pressed cancel while we were busy
@@ -467,26 +468,27 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
 
         
         # If incoming dir is located 
-        incoming = incomingDir.split(':')
-        incoming = str(incoming[1]).replace("\\", "/").strip()
-        incomingFiles = fileManager.findFiles(dataSource, "%", str(incoming))
+        if incomingDir:
+            incoming = incomingDir.split(':')
+            incoming = str(incoming[1]).replace("\\", "/").strip()
+            incomingFiles = fileManager.findFiles(dataSource, "%", str(incoming))
 
-        for file in incomingFiles:
+            for file in incomingFiles:
 
-            # Check if the user pressed cancel while we were busy
-            if self.context.isJobCancelled():
-                return IngestModule.ProcessResult.OK
+                # Check if the user pressed cancel while we were busy
+                if self.context.isJobCancelled():
+                    return IngestModule.ProcessResult.OK
 
-            if not ("." == file.getName()) and not (".." == file.getName()):
-                md5 = file.getMd5Hash()
-                crtime = str(file.getCrtime())
-                crtime = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(float(crtime)))
-                if md5 is None:
-                    md5 = ''
-                art = file.newArtifact(artID_incoming_folder)
-                art.addAttribute(BlackboardAttribute(attID_md5_hash, EmuleIngestModuleFactory.moduleName, md5))
-                art.addAttribute(BlackboardAttribute(attID_crtime, EmuleIngestModuleFactory.moduleName, crtime))
-                IngestServices.getInstance().fireModuleDataEvent(ModuleDataEvent(EmuleIngestModuleFactory.moduleName, artID_incoming_evt, None))   
+                if not ("." == file.getName()) and not (".." == file.getName()):
+                    md5 = file.getMd5Hash()
+                    crtime = str(file.getCrtime())
+                    crtime = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(float(crtime)))
+                    if md5 is None:
+                        md5 = ''
+                    art = file.newArtifact(artID_incoming_folder)
+                    art.addAttribute(BlackboardAttribute(attID_md5_hash, EmuleIngestModuleFactory.moduleName, md5))
+                    art.addAttribute(BlackboardAttribute(attID_crtime, EmuleIngestModuleFactory.moduleName, crtime))
+                    IngestServices.getInstance().fireModuleDataEvent(ModuleDataEvent(EmuleIngestModuleFactory.moduleName, artID_incoming_evt, None))   
 
 
         # Utorrent Forensic \Roaming\uTorrent
