@@ -313,7 +313,6 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
 
 
         emuleConfigFiles = fileManager.findFiles(dataSource, "%", "/AppData/Local/eMule/config")
-        #emuleTorrentConfigFiles = fileManager.findFiles(dataSource, "%", "Local/eMuleTorrent")
 
         self.log(Level.INFO, "P2P Emule Module Starting")
 
@@ -323,7 +322,7 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
         
         for file in emuleConfigFiles:
             
-            # Check if the user pressed cancel while we were busy
+            #Check if the user pressed cancel while we were busy
             if self.context.isJobCancelled():
                 return IngestModule.ProcessResult.OK
 
@@ -342,8 +341,18 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
                         appVersion = line.rsplit('=', 1)[1]
                     if "Language=" in line:
                         lang = line.rsplit('=', 1)[1]
-                        if int(lang) == 1034: #TODO add more id to lang 
+                        intLang = int(lang) 
+                        if intLang == 1034: 
                             lang = "Spanish"
+                        if intLang == 1033:
+                            lang = "English - USA"
+                        if intLang == 2057:
+                            lang = "English - UK"
+
+                        #TODO add more id to lang 
+                        #choices = {'a': 1, 'b': 2}
+                        #result = choices.get(key, 'default')
+
                     if "IncomingDir=" in line:
                         incomingDir = line.rsplit('=', 1)[1]
 
@@ -359,7 +368,7 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
                 f.close()
                 
 
-            # Emule statiscts
+            #Emule statiscts
             if "statistics.ini" in file.getName():
                 configFilesPath = os.path.join(Case.getCurrentCase().getTempDirectory(), str(file.getName()))
                 ContentUtils.writeToFile(file, File(configFilesPath))
@@ -443,7 +452,7 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
                     fobj.seek(i,0)
                     charakter = (fobj.read(4))
 
-                    if charakter == b"\x02\x01\x00\x01":
+                    if charakter == b"\x02\x01\x00\x01": # TAG Filename in known.met file
                         block = getblockofdata(i,fobj, filesize)
                         filename = carvefilename(block)
                         filesizeentry = carvefilesize(block)
@@ -491,7 +500,7 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
                     IngestServices.getInstance().fireModuleDataEvent(ModuleDataEvent(EmuleIngestModuleFactory.moduleName, artID_incoming_evt, None))   
 
 
-        # Utorrent Forensic \Roaming\uTorrent
+        #Utorrent Forensic \Roaming\uTorrent
         uTorrentForensic = fileManager.findFiles(dataSource, "%", "/Roaming/uTorrent")
 
         for file in uTorrentForensic:
@@ -522,6 +531,36 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
                 except:   
                     self.log(Level.INFO, "Error parsing resume.dat file")
                 
+        #BitTorrent Forensic \Roaming\uTorrent
+        BitTorrentForensic = fileManager.findFiles(dataSource, "%", "/Roaming/BitTorrent")
+
+        for file in BitTorrentForensic:
+
+            # Check if the user pressed cancel while we were busy
+            if self.context.isJobCancelled():
+                return IngestModule.ProcessResult.OK
+
+            # Files added to uTorrent, potentialy downloaded
+            if ".torrent" in file.getName():
+                art = file.newArtifact(artID_torrent_added)
+                IngestServices.getInstance().fireModuleDataEvent(ModuleDataEvent(EmuleIngestModuleFactory.moduleName, artID_torrent_evt, None))   
+            
+            # Current downloads 
+            if "resume.dat" in file.getName():
+                try:
+                    configFilesPath = os.path.join(Case.getCurrentCase().getTempDirectory(), str(file.getName()))
+                    ContentUtils.writeToFile(file, File(configFilesPath))
+
+                    f = open(configFilesPath, "rb")
+                    d = decode(f.read())
+
+                    for line in d:
+                        self.log(Level.INFO, line)
+                        art = file.newArtifact(artID_torrent_ongoing)
+                        art.addAttribute(BlackboardAttribute(attID_torrent_name, EmuleIngestModuleFactory.moduleName, str(line)))
+                    IngestServices.getInstance().fireModuleDataEvent(ModuleDataEvent(EmuleIngestModuleFactory.moduleName, artID_torrentOng_evt, None))            
+                except:   
+                    self.log(Level.INFO, "Error parsing resume.dat file")
 
         #Post a message to the ingest messages in box.
         message = IngestMessage.createMessage(IngestMessage.MessageType.DATA,

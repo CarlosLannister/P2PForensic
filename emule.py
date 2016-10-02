@@ -1,11 +1,12 @@
 #Emule module 
 
-import os   # To get filesizes and path
-import time  # To get the actual time
-import binascii  # To convert hex-strings to ascii
-import sys # exits
-import csv # To write csv-files
-import re # Regex to search for magic bytes in unallocated clusters
+'''
+Fork from https://github.com/HexBugsAndRocknRoll/Forensic_Emule_Analyzer
+All code is under GNU GENERAL PUBLIC LICENSE
+'''
+
+import binascii  
+import re 
 
 
 headerfilesize = b"03010002"
@@ -66,9 +67,9 @@ def carvefilesize(block):
         filesizeentry = block[indexinblock+8:indexinblock+16]      # Big endian
         entrylittleendian = filesizeentry[6:8] + filesizeentry[4:6] + filesizeentry[2:4] + filesizeentry[0:2] # Der Big Endian Eintrag wird auf Little Endian umgebogen
         filesizeentry = int(entrylittleendian,16)  # Litte endian in decimal
-        return filesizeentry
+        return(filesizeentry)
     except:
-        return filesizeentry
+        return(filesizeentry)
     
 def carvetotalupload(block): 
     totalupload = 0

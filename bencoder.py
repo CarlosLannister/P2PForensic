@@ -3,12 +3,9 @@
 """
 A simple bencoding implementation in pure Python.
 
-Consult help(encode) and help(decode) for more info.
+All credits to https://github.com/utdemir/bencoder 
+Minor changes to controls exceptions 
 
->>> encode(42) == b'i42e'
-True
->>> decode(b'i42e')
-42
 """
 
 import re
@@ -88,7 +85,7 @@ def decode(s):
 
     if isinstance(s, str):
         try:
-            s = s.encode("ascii")
+            s = s.encode("utf8")
         except:
             pass
 
