@@ -8,4 +8,7 @@ The current version support the following P2P programs:
   * uTorrent 3.4.8
   * bitTorrent
   
-From a forensic view could be useful get information about the usage of P2P clients.Files downloaded or shared could change the sentence in court.
+From a forensic view could be useful get information about the usage of P2P clients. Files downloaded or shared could change the sentence in court.
+
+# Install
+P2P forensic has been written in Python for installation you just need to place the folder inside the Python Module directory
