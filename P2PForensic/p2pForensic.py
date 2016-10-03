@@ -524,9 +524,10 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
                     d = decode(f.read())
 
                     for line in d:
-                        self.log(Level.INFO, line)
-                        art = file.newArtifact(artID_torrent_ongoing)
-                        art.addAttribute(BlackboardAttribute(attID_torrent_name, EmuleIngestModuleFactory.moduleName, str(line)))
+                        if not (".fileguard" == line) and not ("rec" == line):
+                            self.log(Level.INFO, line)
+                            art = file.newArtifact(artID_torrent_ongoing)
+                            art.addAttribute(BlackboardAttribute(attID_torrent_name, EmuleIngestModuleFactory.moduleName, str(line)))
                     IngestServices.getInstance().fireModuleDataEvent(ModuleDataEvent(EmuleIngestModuleFactory.moduleName, artID_torrentOng_evt, None))            
                 except:   
                     self.log(Level.INFO, "Error parsing resume.dat file")
@@ -535,7 +536,7 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
         BitTorrentForensic = fileManager.findFiles(dataSource, "%", "/Roaming/BitTorrent")
 
         for file in BitTorrentForensic:
-
+            self.log(Level.INFO, str(file.getName()))
             # Check if the user pressed cancel while we were busy
             if self.context.isJobCancelled():
                 return IngestModule.ProcessResult.OK
@@ -555,9 +556,10 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
                     d = decode(f.read())
 
                     for line in d:
-                        self.log(Level.INFO, line)
-                        art = file.newArtifact(artID_torrent_ongoing)
-                        art.addAttribute(BlackboardAttribute(attID_torrent_name, EmuleIngestModuleFactory.moduleName, str(line)))
+                        if not (".fileguard" == line) and not ("rec" == line):
+                            self.log(Level.INFO, line)
+                            art = file.newArtifact(artID_torrent_ongoing)
+                            art.addAttribute(BlackboardAttribute(attID_torrent_name, EmuleIngestModuleFactory.moduleName, str(line)))
                     IngestServices.getInstance().fireModuleDataEvent(ModuleDataEvent(EmuleIngestModuleFactory.moduleName, artID_torrentOng_evt, None))            
                 except:   
                     self.log(Level.INFO, "Error parsing resume.dat file")
