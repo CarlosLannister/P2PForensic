@@ -312,8 +312,7 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
 
 
 
-        emuleConfigFiles = fileManager.findFiles(dataSource, "%", "/AppData/Local/eMule/config")
-
+        emuleConfigFiles = fileManager.findFiles(dataSource, "%", "/eMule/config")
         self.log(Level.INFO, "P2P Emule Module Starting")
 
         fileCount = 0;
@@ -333,6 +332,8 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
 
                 f = open(configFilesPath, 'r')
                 incomingDir = ''
+                nick = ''
+                lang = ''
 
                 for line in f:
                     if "Nick=" in line and "IRC" not in line:
@@ -372,6 +373,8 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
             if "statistics.ini" in file.getName():
                 configFilesPath = os.path.join(Case.getCurrentCase().getTempDirectory(), str(file.getName()))
                 ContentUtils.writeToFile(file, File(configFilesPath))
+                completedFiles = '0'
+                donwladedBytes = '0'
 
                 f2 = open(configFilesPath, 'r')
 
@@ -394,6 +397,8 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
                 configFilesPath = os.path.join(Case.getCurrentCase().getTempDirectory(), str(file.getName()))
                 ContentUtils.writeToFile(file, File(configFilesPath))
 
+                userHash = ''
+
                 fobj = open(configFilesPath, "rb")
 
                 block = (fobj.read(17))
@@ -410,8 +415,10 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
             if "AC_SearchStrings.dat" in file.getName():
                 configFilesPath = os.path.join(Case.getCurrentCase().getTempDirectory(), str(file.getName()))
                 ContentUtils.writeToFile(file, File(configFilesPath))
+
                 f = open(configFilesPath)
                 searches = '' 
+
                 for line in f: 
                     searches = line.replace("\00", "")
                     searches = searches.encode('ascii',errors='ignore')
@@ -424,6 +431,7 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
             if "downloads.txt" in file.getName():
                 configFilesPath = os.path.join(Case.getCurrentCase().getTempDirectory(), str(file.getName()))
                 ContentUtils.writeToFile(file, File(configFilesPath))
+                
                 f = open(configFilesPath, "r")
 
                 for line in f:
