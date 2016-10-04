@@ -62,7 +62,7 @@ from org.sleuthkit.autopsy.datamodel import ContentUtils
 
 class EmuleIngestModuleFactory(IngestModuleFactoryAdapter):
 
-    moduleName = "P2P Forensic module"
+    moduleName = "P2P Forensic"
 
     def getModuleDisplayName(self):
         return self.moduleName
@@ -431,7 +431,7 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
             if "downloads.txt" in file.getName():
                 configFilesPath = os.path.join(Case.getCurrentCase().getTempDirectory(), str(file.getName()))
                 ContentUtils.writeToFile(file, File(configFilesPath))
-                
+
                 f = open(configFilesPath, "r")
 
                 for line in f:
@@ -574,7 +574,7 @@ class EmuleDataSourceIngestModule(DataSourceIngestModule):
 
         #Post a message to the ingest messages in box.
         message = IngestMessage.createMessage(IngestMessage.MessageType.DATA,
-            "P2P Forensic Module Finish", "Found files")
+            "P2P Forensic Finish", "Found files related with P2P downloads")
         IngestServices.getInstance().postMessage(message)
 
         return IngestModule.ProcessResult.OK;
